@@ -338,5 +338,4 @@ For support, email support@healthcarepro.com or create an issue in the repositor
 
 ---
 
-**Made with ❤️ for better healthcare management**#   C u r a L i n k - H e a l t h c a r e  
- 
+**Made with ❤️ for better healthcare management**
