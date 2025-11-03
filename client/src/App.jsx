@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return <Loader />
+    return <Loader fullScreen />
   }
 
   if (!user) {
@@ -22,26 +22,62 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />
+    return <Navigate to={`/${user.role}-dashboard`} replace />
+  }
+
+  return children
+}
+
+// Public Route (redirect if logged in)
+const PublicRoute = ({ children }) => {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return <Loader fullScreen />
+  }
+
+  if (user) {
+    return <Navigate to={`/${user.role}-dashboard`} replace />
   }
 
   return children
 }
 
 function App() {
-  const { user, loading } = useAuth()
+  const { loading } = useAuth()
 
   if (loading) {
-    return <Loader />
+    return <Loader fullScreen />
   }
 
   return (
     <div className="min-h-screen">
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={user ? <Navigate to={`/${user.role}-dashboard`} /> : <LandingPage />} />
-        <Route path="/login" element={user ? <Navigate to={`/${user.role}-dashboard`} /> : <Login />} />
-        <Route path="/register" element={user ? <Navigate to={`/${user.role}-dashboard`} /> : <Register />} />
+        <Route 
+          path="/" 
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/login" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/register" 
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          } 
+        />
 
         {/* Protected Routes */}
         <Route

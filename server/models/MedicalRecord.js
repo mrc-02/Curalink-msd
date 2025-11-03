@@ -50,4 +50,8 @@ const medicalRecordSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Index for faster queries
+medicalRecordSchema.index({ patientId: 1, recordDate: -1 });
+medicalRecordSchema.index({ recordType: 1 });
+
 module.exports = mongoose.model('MedicalRecord', medicalRecordSchema);

@@ -16,29 +16,43 @@ exports.protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Not authorized to access this route'
+        message: 'Not authorized to access this route. Please login.'
       });
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    try {
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Get user from token
-    req.user = await User.findById(decoded.id);
+      // Get user from token
+      req.user = await User.findById(decoded.id).select('-password');
 
-    if (!req.user) {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'User no longer exists'
+        });
+      }
+
+      if (!req.user.isActive) {
+        return res.status(401).json({
+          success: false,
+          message: 'Your account has been deactivated'
+        });
+      }
+
+      next();
+    } catch (error) {
       return res.status(401).json({
         success: false,
-        message: 'User no longer exists'
+        message: 'Invalid or expired token. Please login again.'
       });
     }
-
-    next();
   } catch (error) {
     console.error('Auth Middleware Error:', error);
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      message: 'Not authorized to access this route'
+      message: 'Authentication error'
     });
   }
 };

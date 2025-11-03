@@ -109,4 +109,7 @@ patientSchema.virtual('age').get(function() {
 patientSchema.set('toJSON', { virtuals: true });
 patientSchema.set('toObject', { virtuals: true });
 
+// Index for faster queries
+patientSchema.index({ userId: 1 });
+
 module.exports = mongoose.model('Patient', patientSchema);

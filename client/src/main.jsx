@@ -15,11 +15,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <App />
           <Toaster 
             position="top-right"
+            reverseOrder={false}
+            gutter={8}
             toastOptions={{
-              duration: 3000,
+              duration: 4000,
               style: {
                 background: '#363636',
                 color: '#fff',
+                borderRadius: '10px',
+                padding: '16px',
               },
               success: {
                 duration: 3000,
@@ -27,11 +31,23 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                   primary: '#10B981',
                   secondary: '#fff',
                 },
+                style: {
+                  background: '#10B981',
+                },
               },
               error: {
                 duration: 4000,
                 iconTheme: {
                   primary: '#EF4444',
+                  secondary: '#fff',
+                },
+                style: {
+                  background: '#EF4444',
+                },
+              },
+              loading: {
+                iconTheme: {
+                  primary: '#0066CC',
                   secondary: '#fff',
                 },
               },

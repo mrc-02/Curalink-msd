@@ -6,7 +6,8 @@ const {
   getAppointment,
   updateAppointment,
   updateAppointmentStatus,
-  deleteAppointment
+  deleteAppointment,
+  getUpcomingAppointments
 } = require('../controllers/appointmentController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -15,6 +16,8 @@ router.use(protect);
 router.route('/')
   .get(getAppointments)
   .post(authorize('patient'), createAppointment);
+
+router.get('/upcoming', getUpcomingAppointments);
 
 router.route('/:id')
   .get(getAppointment)

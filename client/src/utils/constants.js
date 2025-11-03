@@ -45,7 +45,7 @@ export const DAYS_OF_WEEK = [
 export const TIME_SLOTS = [
   '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
   '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'
+  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'
 ]
 
 export const SEVERITY_LEVELS = ['Mild', 'Moderate', 'Severe']
@@ -63,3 +63,18 @@ export const MEDICAL_RECORD_TYPES = [
 export const PAYMENT_METHODS = ['Cash', 'Card', 'Insurance', 'Online', 'Other']
 
 export const PAYMENT_STATUS = ['Pending', 'Paid', 'Partially Paid', 'Overdue', 'Cancelled']
+
+export const ROLES = {
+  ADMIN: 'admin',
+  DOCTOR: 'doctor',
+  PATIENT: 'patient'
+}
+
+
+export const API_ENDPOINTS = {
+  AUTH: '/auth',
+  DOCTORS: '/doctors',
+  PATIENTS: '/patients',
+  APPOINTMENTS: '/appointments',
+  DASHBOARD: '/dashboard'
+}

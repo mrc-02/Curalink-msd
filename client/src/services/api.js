@@ -8,7 +8,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  withCredentials: true
+  withCredentials: true,
+  timeout: 10000
 })
 
 // Add token to requests
@@ -25,12 +26,30 @@ api.interceptors.request.use(
   }
 )
 
+// Handle response errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Unauthorized - clear token and redirect to login
+      localStorage.removeItem('token')
+      delete api.defaults.headers.common['Authorization']
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
 // API methods
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
   logout: () => api.post('/auth/logout'),
-  getMe: () => api.get('/auth/me')
+  getMe: () => api.get('/auth/me'),
+  updateProfile: (data) => api.put('/auth/profile', data),
+  changePassword: (data) => api.put('/auth/change-password', data)
 }
 
 export const doctorAPI = {
@@ -38,7 +57,8 @@ export const doctorAPI = {
   getById: (id) => api.get(`/doctors/${id}`),
   update: (id, data) => api.put(`/doctors/${id}`, data),
   getAvailability: (id) => api.get(`/doctors/${id}/availability`),
-  updateAvailability: (id, data) => api.put(`/doctors/${id}/availability`, data)
+  updateAvailability: (id, data) => api.put(`/doctors/${id}/availability`, data),
+  getStats: (id) => api.get(`/doctors/${id}/stats`)
 }
 
 export const patientAPI = {
@@ -52,8 +72,9 @@ export const appointmentAPI = {
   getById: (id) => api.get(`/appointments/${id}`),
   create: (data) => api.post('/appointments', data),
   update: (id, data) => api.put(`/appointments/${id}`, data),
-  updateStatus: (id, status) => api.patch(`/appointments/${id}/status`, status),
-  delete: (id) => api.delete(`/appointments/${id}`)
+  updateStatus: (id, statusData) => api.patch(`/appointments/${id}/status`, statusData),
+  delete: (id) => api.delete(`/appointments/${id}`),
+  getUpcoming: () => api.get('/appointments/upcoming')
 }
 
 export const dashboardAPI = {

@@ -6,25 +6,26 @@ const User = require('../models/User');
 // @access  Public
 exports.getDoctors = async (req, res) => {
   try {
-    const { specialization, search, page = 1, limit = 10 } = req.query;
+    const { specialization, search, page = 1, limit = 10, sort = '-rating' } = req.query;
 
     let query = {};
 
     // Filter by specialization
-    if (specialization) {
+    if (specialization && specialization !== 'all') {
       query.specialization = specialization;
     }
 
-    const doctors = await Doctor.find(query)
-      .populate('userId', 'firstName lastName email phone profilePicture')
+    // Search by name
+    let doctors = await Doctor.find(query)
+      .populate('userId', 'firstName lastName email phone profilePicture address')
+      .sort(sort)
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .sort({ rating: -1 });
+      .lean();
 
-    // Search by name if provided
-    let filteredDoctors = doctors;
+    // Filter by search term if provided
     if (search) {
-      filteredDoctors = doctors.filter(doc => {
+      doctors = doctors.filter(doc => {
         const fullName = `${doc.userId.firstName} ${doc.userId.lastName}`.toLowerCase();
         return fullName.includes(search.toLowerCase());
       });
@@ -34,11 +35,14 @@ exports.getDoctors = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: filteredDoctors.length,
+      count: doctors.length,
       total,
-      data: filteredDoctors
+      page: Number(page),
+      pages: Math.ceil(total / limit),
+      data: doctors
     });
   } catch (error) {
+    console.error('Get Doctors Error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching doctors',
@@ -97,10 +101,15 @@ exports.updateDoctor = async (req, res) => {
       });
     }
 
-    doctor = await Doctor.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    }).populate('userId');
+    // Update doctor
+    doctor = await Doctor.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true
+      }
+    ).populate('userId');
 
     res.status(200).json({
       success: true,
@@ -177,6 +186,38 @@ exports.updateDoctorAvailability = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating availability',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get doctor statistics
+// @route   GET /api/doctors/:id/stats
+// @access  Private (Doctor/Admin)
+exports.getDoctorStats = async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.params.id);
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalPatients: doctor.totalPatients,
+        totalAppointments: doctor.totalAppointments,
+        rating: doctor.rating,
+        totalReviews: doctor.totalReviews
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching statistics',
       error: error.message
     });
   }

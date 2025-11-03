@@ -73,7 +73,11 @@ const doctorSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Patient'
     },
-    rating: Number,
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5
+    },
     comment: String,
     date: {
       type: Date,
@@ -99,5 +103,9 @@ const doctorSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Index for faster queries
+doctorSchema.index({ specialization: 1, rating: -1 });
+doctorSchema.index({ userId: 1 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

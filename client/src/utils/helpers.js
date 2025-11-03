@@ -7,6 +7,7 @@ export const formatDate = (date, formatString = 'MMM dd, yyyy') => {
     const parsedDate = typeof date === 'string' ? parseISO(date) : date
     return format(parsedDate, formatString)
   } catch (error) {
+    console.error('Date formatting error:', error)
     return ''
   }
 }
@@ -24,6 +25,15 @@ export const formatTime = (time) => {
   }
 }
 
+export const formatDateTime = (date) => {
+  if (!date) return ''
+  try {
+    return formatDate(date, 'MMM dd, yyyy hh:mm a')
+  } catch (error) {
+    return ''
+  }
+}
+
 export const getRelativeDate = (date) => {
   if (!date) return ''
   try {
@@ -36,9 +46,31 @@ export const getRelativeDate = (date) => {
   }
 }
 
+export const isPastDate = (date) => {
+  if (!date) return false
+  try {
+    const parsedDate = typeof date === 'string' ? parseISO(date) : date
+    return isPast(parsedDate)
+  } catch (error) {
+    return false
+  }
+}
+
+export const isFutureDate = (date) => {
+  if (!date) return false
+  try {
+    const parsedDate = typeof date === 'string' ? parseISO(date) : date
+    return isFuture(parsedDate)
+  } catch (error) {
+    return false
+  }
+}
+
 // Name formatting
 export const getInitials = (firstName, lastName) => {
-  return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
+  const first = firstName?.charAt(0)?.toUpperCase() || ''
+  const last = lastName?.charAt(0)?.toUpperCase() || ''
+  return `${first}${last}`
 }
 
 export const getFullName = (user) => {
@@ -49,35 +81,42 @@ export const getFullName = (user) => {
 // Status formatting
 export const getStatusColor = (status) => {
   const colors = {
-    Pending: 'yellow',
-    Confirmed: 'blue',
-    Completed: 'green',
-    Cancelled: 'red',
+    'Pending': 'yellow',
+    'Confirmed': 'blue',
+    'Completed': 'green',
+    'Cancelled': 'red',
     'No-Show': 'gray',
-    Paid: 'green',
-    Unpaid: 'red',
-    'Partially Paid': 'orange'
+    'Paid': 'green',
+    'Unpaid': 'red',
+    'Partially Paid': 'orange',
+    'Overdue': 'red'
   }
   return colors[status] || 'gray'
 }
 
 export const getStatusBadgeClass = (status) => {
   const classes = {
-    Pending: 'badge-pending',
-    Confirmed: 'badge-confirmed',
-    Completed: 'badge-completed',
-    Cancelled: 'badge-cancelled'
+    'Pending': 'badge-pending',
+    'Confirmed': 'badge-confirmed',
+    'Completed': 'badge-completed',
+    'Cancelled': 'badge-cancelled',
+    'No-Show': 'badge-cancelled'
   }
   return classes[status] || 'badge'
 }
 
 // Number formatting
 export const formatCurrency = (amount) => {
-  if (!amount) return '$0.00'
+  if (!amount && amount !== 0) return '$0.00'
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD'
   }).format(amount)
+}
+
+export const formatNumber = (num) => {
+  if (!num && num !== 0) return '0'
+  return new Intl.NumberFormat('en-US').format(num)
 }
 
 export const formatPhone = (phone) => {
@@ -101,6 +140,11 @@ export const validatePhone = (phone) => {
   return re.test(phone)
 }
 
+export const validatePassword = (password) => {
+  // At least 6 characters
+  return password && password.length >= 6
+}
+
 // Truncate text
 export const truncateText = (text, maxLength = 50) => {
   if (!text) return ''
@@ -111,14 +155,18 @@ export const truncateText = (text, maxLength = 50) => {
 // Calculate age
 export const calculateAge = (dateOfBirth) => {
   if (!dateOfBirth) return null
-  const today = new Date()
-  const birthDate = new Date(dateOfBirth)
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const monthDiff = today.getMonth() - birthDate.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--
+  try {
+    const today = new Date()
+    const birthDate = new Date(dateOfBirth)
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age
+  } catch (error) {
+    return null
   }
-  return age
 }
 
 // Sort functions
@@ -168,4 +216,55 @@ export const exportToCSV = (data, filename) => {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+}
+
+// Local storage helpers
+export const setLocalStorage = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch (error) {
+    console.error('Error saving to localStorage:', error)
+  }
+}
+
+export const getLocalStorage = (key) => {
+  try {
+    const item = localStorage.getItem(key)
+    return item ? JSON.parse(item) : null
+  } catch (error) {
+    console.error('Error reading from localStorage:', error)
+    return null
+  }
+}
+
+export const removeLocalStorage = (key) => {
+  try {
+    localStorage.removeItem(key)
+  } catch (error) {
+    console.error('Error removing from localStorage:', error)
+  }
+}
+
+// Debounce function
+export const debounce = (func, wait = 300) => {
+  let timeout
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout)
+      func(...args)
+    }
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+  }
+}
+
+// Copy to clipboard
+export const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch (error) {
+    console.error('Failed to copy:', error)
+    return false
+  }
 }
