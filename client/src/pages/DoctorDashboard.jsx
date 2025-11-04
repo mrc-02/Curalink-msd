@@ -13,7 +13,9 @@ import Sidebar from '../components/common/Sidebar'
 import Navbar from '../components/common/Navbar'
 import Card from '../components/common/Card'
 import Loader from '../components/common/Loader'
-import { dashboardAPI } from '../services/api'
+import AppointmentList from '../components/appointments/AppointmentList'
+import ProfileManagement from '../components/profile/ProfileManagement'
+import { dashboardAPI, appointmentAPI } from '../services/api'
 import { formatDate, formatTime } from '../utils/helpers'
 import toast from 'react-hot-toast'
 
@@ -192,11 +194,81 @@ const DoctorDashboardHome = () => {
 
 // Doctor Appointments Component
 const DoctorAppointments = () => {
+  const [appointments, setAppointments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('All')
+
+  useEffect(() => {
+    fetchAppointments()
+  }, [])
+
+  const fetchAppointments = async () => {
+    setLoading(true)
+    try {
+      const { data } = await appointmentAPI.getAll()
+      setAppointments(data.data || [])
+    } catch (error) {
+      console.error('Error fetching appointments:', error)
+      toast.error('Failed to load appointments')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStatusUpdate = async (appointmentId, status, reason) => {
+    try {
+      await appointmentAPI.updateStatus(appointmentId, { status, cancellationReason: reason })
+      toast.success('Appointment updated successfully')
+      fetchAppointments()
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update appointment'
+      toast.error(message)
+    }
+  }
+
+  const handleDelete = async (appointmentId) => {
+    try {
+      await appointmentAPI.delete(appointmentId)
+      toast.success('Appointment deleted successfully')
+      fetchAppointments()
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to delete appointment'
+      toast.error(message)
+    }
+  }
+
+  const filterOptions = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled']
+
+  const filteredAppointments = filter === 'All'
+    ? appointments
+    : appointments.filter(apt => apt.status === filter)
+
+  if (loading) return <Loader />
+
   return (
-    <Card>
-      <h2 className="text-2xl font-bold mb-6">Appointment Management</h2>
-      <p className="text-gray-600">Appointment management features coming soon...</p>
-    </Card>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <h2 className="text-2xl font-bold text-gray-900">Appointment Management</h2>
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="input-field max-w-xs"
+        >
+          {filterOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <AppointmentList
+        appointments={filteredAppointments}
+        onStatusUpdate={handleStatusUpdate}
+        onDelete={handleDelete}
+        userRole="doctor"
+      />
+    </div>
   )
 }
 
@@ -222,12 +294,7 @@ const DoctorSchedule = () => {
 
 // Doctor Profile Component
 const DoctorProfile = () => {
-  return (
-    <Card>
-      <h2 className="text-2xl font-bold mb-6">My Profile</h2>
-      <p className="text-gray-600">Profile management features coming soon...</p>
-    </Card>
-  )
+  return <ProfileManagement />
 }
 
 export default DoctorDashboard

@@ -15,6 +15,9 @@ import Sidebar from '../components/common/Sidebar'
 import Navbar from '../components/common/Navbar'
 import Card from '../components/common/Card'
 import Loader from '../components/common/Loader'
+import AppointmentList from '../components/appointments/AppointmentList'
+import BookAppointment from '../components/appointments/BookAppointment'
+import ProfileManagement from '../components/profile/ProfileManagement'
 import { dashboardAPI, appointmentAPI, doctorAPI } from '../services/api'
 import { formatDate, formatTime, getRelativeDate } from '../utils/helpers'
 import toast from 'react-hot-toast'
@@ -243,11 +246,84 @@ const DashboardHome = () => {
 
 // Appointments Page Component
 const AppointmentsPage = () => {
+  const [appointments, setAppointments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('All')
+
+  useEffect(() => {
+    fetchAppointments()
+  }, [])
+
+  const fetchAppointments = async () => {
+    setLoading(true)
+    try {
+      const { data } = await appointmentAPI.getAll()
+      setAppointments(data.data || [])
+    } catch (error) {
+      console.error('Error fetching appointments:', error)
+      toast.error('Failed to load appointments')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStatusUpdate = async (appointmentId, status, reason) => {
+    try {
+      await appointmentAPI.updateStatus(appointmentId, { status, cancellationReason: reason })
+      toast.success('Appointment updated successfully')
+      fetchAppointments()
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update appointment'
+      toast.error(message)
+    }
+  }
+
+  const handleDelete = async (appointmentId) => {
+    try {
+      await appointmentAPI.delete(appointmentId)
+      toast.success('Appointment cancelled successfully')
+      fetchAppointments()
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to cancel appointment'
+      toast.error(message)
+    }
+  }
+
+  const filterOptions = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled']
+
+  const filteredAppointments = filter === 'All'
+    ? appointments
+    : appointments.filter(apt => apt.status === filter)
+
+  if (loading) return <Loader />
+
   return (
-    <Card>
-      <h2 className="text-2xl font-bold mb-6">My Appointments</h2>
-      <p className="text-gray-600">Appointments management coming soon...</p>
-    </Card>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <h2 className="text-2xl font-bold text-gray-900">My Appointments</h2>
+        <div className="flex items-center gap-3">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="input-field"
+          >
+            {filterOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <BookAppointment onSuccess={fetchAppointments} />
+        </div>
+      </div>
+
+      <AppointmentList
+        appointments={filteredAppointments}
+        onStatusUpdate={handleStatusUpdate}
+        onDelete={handleDelete}
+        userRole="patient"
+      />
+    </div>
   )
 }
 
@@ -323,12 +399,7 @@ const BillingPage = () => {
 
 // Profile Page Component
 const ProfilePage = () => {
-  return (
-    <Card>
-      <h2 className="text-2xl font-bold mb-6">My Profile</h2>
-      <p className="text-gray-600">Profile management coming soon...</p>
-    </Card>
-  )
+  return <ProfileManagement />
 }
 
 export default PatientDashboard
